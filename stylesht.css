@@ -1176,3 +1176,7 @@
     border: 1px dashed var(--border-focus);
     border-radius: 8px;
 }
+
+.welcome-card {
+    text-align: center;
+}

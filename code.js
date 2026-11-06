@@ -110,10 +110,10 @@
         const bottomInputArea = document.getElementById('bottom-input-area');
 
         const welcomePrompts = [
-            "What can i assist you?",
-            "Give me your needs ",
+            "What can i assist you with?",
+            "Welcome back",
             "How can i help you ?",
-            "Hi, Im HealthCL, Ready to assist anytime"
+            
         ];
         let lastWelcomePrompt = null;
 

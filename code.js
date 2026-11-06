@@ -35,6 +35,8 @@
         let userConditions = localStorage.getItem('ai_health_conditions') || '';
         let userEquipment = localStorage.getItem('ai_health_equipment') || '';
         let userPreferredName = localStorage.getItem('ai_health_preferred_name') || '';
+        let userName = localStorage.getItem('ai_health_username') || '';
+        let welcomeCardsEnabled = localStorage.getItem('ai_health_welcome_cards_enabled') !== 'false';
         
         // New Schedule State Variables
         let userScheduleType = localStorage.getItem('ai_health_schedule_type') || '';
@@ -66,7 +68,9 @@
         if (userWeight) document.getElementById('user-weight').value = userWeight;
         if (userConditions) document.getElementById('user-conditions').value = userConditions;
         if (userPreferredName) document.getElementById('user-preferred-name').value = userPreferredName;
+        if (userName) document.getElementById('user-name').value = userName;
         if (userEquipment) document.getElementById('user-equipment').value = userEquipment;
+        document.getElementById('welcome-card-enabled').checked = welcomeCardsEnabled;
         
         // Hydrate new schedule inputs
         const scheduleTypeInput = document.getElementById('user-schedule-type');
@@ -117,7 +121,29 @@
         ];
         let lastWelcomePrompt = null;
 
+        function getLocalDateKey() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        const loginState = JSON.parse(localStorage.getItem('ai_health_daily_login')) || { date: '', count: 0 };
+        const localDate = getLocalDateKey();
+        const sameDayLoginCount = loginState.date === localDate ? loginState.count + 1 : 1;
+        localStorage.setItem('ai_health_daily_login', JSON.stringify({ date: localDate, count: sameDayLoginCount }));
+
         function getRandomWelcomePrompt() {
+            if (sameDayLoginCount >= 2 && Math.random() < (1 / 3)) {
+                const repeatedLoginPrompts = [
+                    "Glad to see you back",
+                    userName ? `Welcome back, ${userName}` : "Welcome back",
+                    userName ? `How shall i help, ${userName}?` : "How shall i help?"
+                ];
+                return repeatedLoginPrompts[Math.floor(Math.random() * repeatedLoginPrompts.length)];
+            }
+
             const availablePrompts = welcomePrompts.filter(prompt => prompt !== lastWelcomePrompt);
             const selected = availablePrompts[Math.floor(Math.random() * availablePrompts.length)];
             lastWelcomePrompt = selected;
@@ -130,7 +156,7 @@
         }
 
         function showWelcomeCard(show) {
-            if (show) {
+            if (show && welcomeCardsEnabled) {
                 welcomeCard.classList.remove('hidden');
                 bottomInputArea.style.display = 'none';
                 welcomeInputWrapper.appendChild(chatInput);
@@ -320,6 +346,16 @@
             Object.values(views).forEach(view => view.classList.remove('active'));
             views[viewName].classList.add('active');
             if (viewName === 'planner') updatePlannerState();
+            if (viewName === 'settings' && localStorage.getItem('ai_health_username_prompted') !== 'true' && !userName) {
+                const enteredName = window.prompt("What username would you like to use in welcome messages? (Optional)", "");
+                if (enteredName !== null) {
+                    userName = enteredName.trim();
+                    if (userName) localStorage.setItem('ai_health_username', userName);
+                    else localStorage.removeItem('ai_health_username');
+                    document.getElementById('user-name').value = userName;
+                }
+                localStorage.setItem('ai_health_username_prompted', 'true');
+            }
         }
 
         buttons.planner.addEventListener('click', () => switchView('planner'));
@@ -353,6 +389,7 @@
             userWeight = document.getElementById('user-weight').value.trim();
             userConditions = document.getElementById('user-conditions').value.trim();
             userPreferredName = document.getElementById('user-preferred-name').value.trim();
+            userName = document.getElementById('user-name').value.trim();
             userEquipment = document.getElementById('user-equipment').value.trim();
             
             // Schedule Info
@@ -367,6 +404,8 @@
             localStorage.setItem('ai_health_conditions', userConditions);
             if (userPreferredName) localStorage.setItem('ai_health_preferred_name', userPreferredName);
             else localStorage.removeItem('ai_health_preferred_name');
+            if (userName) localStorage.setItem('ai_health_username', userName);
+            else localStorage.removeItem('ai_health_username');
             if (userEquipment) localStorage.setItem('ai_health_equipment', userEquipment);
             else localStorage.removeItem('ai_health_equipment');
             
@@ -379,6 +418,7 @@
             const newScale = document.getElementById('ui-scale-input').value;
             const newFontSize = document.getElementById('font-size-input').value;
             const newTheme = document.getElementById('ui-theme-select').value;
+            welcomeCardsEnabled = document.getElementById('welcome-card-enabled').checked;
             
             document.documentElement.style.setProperty('--ui-scale', newScale);
             document.documentElement.style.setProperty('--base-font-size', newFontSize + 'px');
@@ -391,9 +431,13 @@
                 document.body.classList.remove('light-mode');
             }
             localStorage.setItem('ai_health_theme', newTheme);
+            localStorage.setItem('ai_health_welcome_cards_enabled', String(welcomeCardsEnabled));
 
             updateInputState();
             updatePlannerState();
+            if (!welcomeCardsEnabled && !welcomeCard.classList.contains('hidden')) {
+                showWelcomeCard(false);
+            }
 
             const notice = document.getElementById('save-notice');
             notice.style.opacity = '1';

@@ -166,6 +166,11 @@
                     <div class="settings-section-title">Optionals</div>
                     <div class="grid-2col">
                         <div class="settings-group">
+                            <label class="settings-label" for="user-name">Username (Optional):</label>
+                            <input type="text" id="user-name" class="settings-input" placeholder="e.g. Alex">
+                            <small class="settings-help">Used in welcome-card greetings. Leave blank for no username.</small>
+                        </div>
+                        <div class="settings-group">
                             <label class="settings-label" for="user-conditions">Special Conditions (Optional):</label>
                             <input type="text" id="user-conditions" class="settings-input" placeholder="Injuries, asthma, allergies, etc.">
                         </div>
@@ -204,6 +209,13 @@
                             <input class="flex-grow" type="range" id="font-size-input" min="12" max="24" step="1" value="14">
                             <span class="font-size-display" id="font-size-display">14px</span>
                         </div>
+                    </div>
+                    <div class="settings-group welcome-card-setting">
+                        <label class="settings-label" for="welcome-card-enabled">Welcome Cards:</label>
+                        <label class="checkbox-setting">
+                            <input type="checkbox" id="welcome-card-enabled" checked>
+                            <span>Show welcome cards when starting a chat</span>
+                        </label>
                     </div>
                 </div>
             </div>

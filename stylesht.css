@@ -481,11 +481,11 @@
             max-width: 100%;
             min-height: calc(240px * var(--ui-scale));
             height: calc(240px * var(--ui-scale));
-            border-radius: calc(18px * var(--ui-scale));
-            border: 1px solid var(--border-light);
-            background-color: rgba(255,255,255,0.06);
-            object-fit: cover;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+            border: none;
+            border-radius: 0;
+            background-color: transparent;
+            object-fit: contain;
+            filter: invert(1);
             flex-shrink: 0;
         }
 
@@ -1155,6 +1155,24 @@
     min-width: 40px;
     text-align: right;
     color: var(--text-main);
+}
+
+.welcome-card-setting {
+    grid-column: 1 / -1;
+}
+
+.checkbox-setting {
+    display: flex;
+    align-items: center;
+    gap: calc(10px * var(--ui-scale));
+    color: var(--text-main);
+    cursor: pointer;
+}
+
+.checkbox-setting input {
+    width: calc(18px * var(--ui-scale));
+    height: calc(18px * var(--ui-scale));
+    accent-color: var(--accent);
 }
 
 .settings-actions {

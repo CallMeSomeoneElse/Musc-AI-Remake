@@ -32,8 +32,16 @@
         </div>
         
         <div class="dashboard-spacer"></div>
-        
-        <button class="dash-btn centered-dash-btn" id="settings-btn">Settings</button>
+
+        <div class="dashboard-profile-actions">
+            <button class="dash-btn profile-btn" id="profile-btn">
+                <span>Profile</span>
+                <span class="profile-status" id="profile-status">Not set</span>
+            </button>
+            <button class="dash-btn centered-dash-btn" id="persona-btn">Persona</button>
+            <button class="dash-btn centered-dash-btn" id="settings-btn">Settings</button>
+            <button class="dash-btn centered-dash-btn logout-btn" id="logout-btn" disabled title="Reserved for a future login system">Log out</button>
+        </div>
     </div>
 
     <!-- Main Content Area -->
@@ -55,6 +63,24 @@
             </div>
             <div class="input-area is-hidden" id="bottom-input-area">
                 <input type="text" id="chat-input" class="chat-input" placeholder="Ask HealthCL" autocomplete="off">
+            </div>
+        </div>
+
+        <!-- Profile Interface -->
+        <div class="view-section" id="profile-view">
+            <div class="profile-view-card">
+                <div class="profile-avatar" id="profile-avatar">?</div>
+                <div class="profile-name" id="profile-name">No profile set</div>
+                <div class="profile-subtitle">Profile details from Settings</div>
+                <div class="profile-details">
+                    <div><span>Username</span><strong id="profile-username">Blank</strong></div>
+                    <div><span>Preferred Name</span><strong id="profile-preferred-name">Blank</strong></div>
+                    <div><span>Height</span><strong id="profile-height">Blank</strong></div>
+                    <div><span>Age</span><strong id="profile-age">Blank</strong></div>
+                    <div><span>Weight</span><strong id="profile-weight">Blank</strong></div>
+                    <div><span>Persona</span><strong id="profile-persona">Default</strong></div>
+                </div>
+                <button class="action-btn" id="profile-edit-btn">Edit Settings</button>
             </div>
         </div>
 

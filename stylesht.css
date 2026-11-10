@@ -95,6 +95,22 @@
             --sys-msg-text: #721c24;
         }
 
+        body.light-mode .welcome-cat-img {
+            filter: none;
+        }
+
+        body.light-mode .welcome-card {
+            background-color: rgba(255, 255, 255, 0.92);
+        }
+
+        body.light-mode .action-btn:hover {
+            color: #000000;
+        }
+
+        body.light-mode .modal-btn.confirm {
+            color: #000000;
+        }
+
         body {
             margin: 0;
             padding: 0;
@@ -185,6 +201,24 @@
         .dash-btn:hover {
             background-color: var(--bg-active);
             border-color: var(--border-focus);
+        }
+
+        .dashboard-profile-actions {
+            display: flex;
+            flex-direction: column;
+            gap: calc(8px * var(--ui-scale));
+            margin-top: calc(15px * var(--ui-scale));
+            width: 100%;
+        }
+
+        .profile-status {
+            color: var(--text-dim);
+            font-size: calc((var(--base-font-size) - 2px) * var(--ui-scale));
+        }
+
+        .logout-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
         }
 
         /* Collapsible History Dropdown */
@@ -384,6 +418,74 @@
 
         .view-section.active {
             display: flex;
+        }
+
+        /* PROFILE VIEW */
+        #profile-view {
+            align-items: center;
+            justify-content: center;
+            padding: calc(30px * var(--ui-scale));
+            box-sizing: border-box;
+        }
+
+        .profile-view-card {
+            width: min(560px, 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: calc(18px * var(--ui-scale));
+            padding: calc(32px * var(--ui-scale));
+            box-sizing: border-box;
+        }
+
+        .profile-avatar {
+            width: calc(72px * var(--ui-scale));
+            height: calc(72px * var(--ui-scale));
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            background: var(--bg-active);
+            color: var(--text-main);
+            border: 1px solid var(--border-main);
+            font-size: calc((var(--base-font-size) + 16px) * var(--ui-scale));
+            font-weight: 700;
+        }
+
+        .profile-name {
+            margin-top: calc(14px * var(--ui-scale));
+            font-size: calc((var(--base-font-size) + 8px) * var(--ui-scale));
+            font-weight: 700;
+        }
+
+        .profile-subtitle {
+            margin-top: calc(5px * var(--ui-scale));
+            color: var(--text-dim);
+        }
+
+        .profile-details {
+            width: 100%;
+            margin: calc(24px * var(--ui-scale)) 0;
+            display: grid;
+            gap: calc(10px * var(--ui-scale));
+        }
+
+        .profile-details div {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            padding: calc(10px * var(--ui-scale));
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .profile-details span {
+            color: var(--text-muted);
+        }
+
+        .profile-details strong {
+            text-align: right;
+            max-width: 70%;
         }
 
         /* CHAT VIEW */

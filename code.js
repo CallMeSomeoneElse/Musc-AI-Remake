@@ -327,6 +327,7 @@
         
         const views = {
             chat: document.getElementById('chat-view'),
+            profile: document.getElementById('profile-view'),
             planner: document.getElementById('planner-view'),
             settings: document.getElementById('settings-view')
         };
@@ -346,6 +347,7 @@
             Object.values(views).forEach(view => view.classList.remove('active'));
             views[viewName].classList.add('active');
             if (viewName === 'planner') updatePlannerState();
+            if (viewName === 'profile') updateProfileView();
             if (viewName === 'settings' && localStorage.getItem('ai_health_username_prompted') !== 'true' && !userName) {
                 const enteredName = window.prompt("What username would you like to use in welcome messages? (Optional)", "");
                 if (enteredName !== null) {
@@ -361,6 +363,12 @@
         buttons.planner.addEventListener('click', () => switchView('planner'));
         buttons.settings.addEventListener('click', () => switchView('settings'));
         document.getElementById('go-to-settings-btn').addEventListener('click', () => switchView('settings'));
+        document.getElementById('profile-btn').addEventListener('click', () => switchView('profile'));
+        document.getElementById('profile-edit-btn').addEventListener('click', () => switchView('settings'));
+        document.getElementById('persona-btn').addEventListener('click', () => {
+            switchView('settings');
+            document.querySelector('.personality-group').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
 
         // --- 2. Chat History Dropdown Toggle ---
         const historyToggleBtn = document.getElementById('history-toggle-btn');
@@ -373,76 +381,122 @@
         });
 
         // --- 3. Settings Management ---
-        document.getElementById('save-settings-btn').addEventListener('click', () => {
-            // API & Persona
-            GEMINI_API_KEY = document.getElementById('api-key-input').value.trim();
-            aiPersonality = document.getElementById('ai-personality-input').value.trim();
-            
-            if (GEMINI_API_KEY) localStorage.setItem('ai_health_gemini_key', GEMINI_API_KEY);
-            else localStorage.removeItem('ai_health_gemini_key');
-            
-            localStorage.setItem('ai_health_personality', aiPersonality);
+        function collectSettingValues() {
+            return {
+                'ai_health_gemini_key': document.getElementById('api-key-input').value.trim(),
+                'ai_health_personality': document.getElementById('ai-personality-input').value.trim(),
+                'ai_health_height': document.getElementById('user-height').value.trim(),
+                'ai_health_age': document.getElementById('user-age').value.trim(),
+                'ai_health_weight': document.getElementById('user-weight').value.trim(),
+                'ai_health_conditions': document.getElementById('user-conditions').value.trim(),
+                'ai_health_preferred_name': document.getElementById('user-preferred-name').value.trim(),
+                'ai_health_username': document.getElementById('user-name').value.trim(),
+                'ai_health_equipment': document.getElementById('user-equipment').value.trim(),
+                'ai_health_schedule_type': document.getElementById('user-schedule-type').value.trim(),
+                'ai_health_schedule_start': document.getElementById('user-schedule-start').value,
+                'ai_health_schedule_end': document.getElementById('user-schedule-end').value,
+                'ai_health_timezone': document.getElementById('user-timezone').value.trim(),
+                'ai_health_ui_scale': document.getElementById('ui-scale-input').value,
+                'ai_health_font_size': document.getElementById('font-size-input').value,
+                'ai_health_theme': document.getElementById('ui-theme-select').value,
+                'ai_health_welcome_cards_enabled': String(document.getElementById('welcome-card-enabled').checked)
+            };
+        }
 
-            // Profile Info
-            userHeight = document.getElementById('user-height').value.trim();
-            userAge = document.getElementById('user-age').value.trim();
-            userWeight = document.getElementById('user-weight').value.trim();
-            userConditions = document.getElementById('user-conditions').value.trim();
-            userPreferredName = document.getElementById('user-preferred-name').value.trim();
-            userName = document.getElementById('user-name').value.trim();
-            userEquipment = document.getElementById('user-equipment').value.trim();
-            
-            // Schedule Info
-            userScheduleType = document.getElementById('user-schedule-type').value.trim();
-            userScheduleStart = document.getElementById('user-schedule-start').value;
-            userScheduleEnd = document.getElementById('user-schedule-end').value;
-            userTimezone = document.getElementById('user-timezone').value.trim();
+        let settingsSnapshot = collectSettingValues();
+        let settingsSaveTimer = null;
 
-            localStorage.setItem('ai_health_height', userHeight);
-            localStorage.setItem('ai_health_age', userAge);
-            localStorage.setItem('ai_health_weight', userWeight);
-            localStorage.setItem('ai_health_conditions', userConditions);
-            if (userPreferredName) localStorage.setItem('ai_health_preferred_name', userPreferredName);
-            else localStorage.removeItem('ai_health_preferred_name');
-            if (userName) localStorage.setItem('ai_health_username', userName);
-            else localStorage.removeItem('ai_health_username');
-            if (userEquipment) localStorage.setItem('ai_health_equipment', userEquipment);
-            else localStorage.removeItem('ai_health_equipment');
-            
-            localStorage.setItem('ai_health_schedule_type', userScheduleType);
-            localStorage.setItem('ai_health_schedule_start', userScheduleStart);
-            localStorage.setItem('ai_health_schedule_end', userScheduleEnd);
-            localStorage.setItem('ai_health_timezone', userTimezone);
+        function updateProfileView() {
+            const displayedPreferredName = document.getElementById('user-preferred-name').value.trim();
+            const displayedUserName = document.getElementById('user-name').value.trim();
+            const displayedHeight = document.getElementById('user-height').value.trim();
+            const displayedAge = document.getElementById('user-age').value.trim();
+            const displayedWeight = document.getElementById('user-weight').value.trim();
+            const displayedPersonality = document.getElementById('ai-personality-input').value.trim();
+            const displayName = displayedPreferredName || displayedUserName || '';
+            const profileStatus = document.getElementById('profile-status');
+            const profileName = document.getElementById('profile-name');
+            const profileAvatar = document.getElementById('profile-avatar');
 
-            // UI Preferences
-            const newScale = document.getElementById('ui-scale-input').value;
-            const newFontSize = document.getElementById('font-size-input').value;
-            const newTheme = document.getElementById('ui-theme-select').value;
-            welcomeCardsEnabled = document.getElementById('welcome-card-enabled').checked;
-            
-            document.documentElement.style.setProperty('--ui-scale', newScale);
-            document.documentElement.style.setProperty('--base-font-size', newFontSize + 'px');
-            localStorage.setItem('ai_health_ui_scale', newScale);
-            localStorage.setItem('ai_health_font_size', newFontSize);
+            profileStatus.textContent = displayName ? 'Configured' : 'Not set';
+            profileName.textContent = displayName || 'No profile set';
+            profileAvatar.textContent = displayName ? displayName.charAt(0).toUpperCase() : '?';
+            document.getElementById('profile-username').textContent = displayedUserName || 'Blank';
+            document.getElementById('profile-preferred-name').textContent = displayedPreferredName || 'Blank';
+            document.getElementById('profile-height').textContent = displayedHeight || 'Blank';
+            document.getElementById('profile-age').textContent = displayedAge || 'Blank';
+            document.getElementById('profile-weight').textContent = displayedWeight || 'Blank';
+            document.getElementById('profile-persona').textContent = displayedPersonality ? 'Custom' : 'Default';
+        }
 
-            if (newTheme === 'light') {
-                document.body.classList.add('light-mode');
-            } else {
-                document.body.classList.remove('light-mode');
-            }
-            localStorage.setItem('ai_health_theme', newTheme);
-            localStorage.setItem('ai_health_welcome_cards_enabled', String(welcomeCardsEnabled));
+        function saveSettings(showNotice = true) {
+            const values = collectSettingValues();
+            let changedCount = 0;
+
+            Object.entries(values).forEach(([key, value]) => {
+                if (settingsSnapshot[key] === value) return;
+                changedCount++;
+                if (value) localStorage.setItem(key, value);
+                else localStorage.removeItem(key);
+            });
+
+            if (changedCount === 0) return false;
+            settingsSnapshot = values;
+
+            GEMINI_API_KEY = values.ai_health_gemini_key;
+            aiPersonality = values.ai_health_personality;
+            userHeight = values.ai_health_height;
+            userAge = values.ai_health_age;
+            userWeight = values.ai_health_weight;
+            userConditions = values.ai_health_conditions;
+            userPreferredName = values.ai_health_preferred_name;
+            userName = values.ai_health_username;
+            userEquipment = values.ai_health_equipment;
+            userScheduleType = values.ai_health_schedule_type;
+            userScheduleStart = values.ai_health_schedule_start;
+            userScheduleEnd = values.ai_health_schedule_end;
+            userTimezone = values.ai_health_timezone;
+            currentScale = values.ai_health_ui_scale;
+            currentFontSize = values.ai_health_font_size;
+            currentTheme = values.ai_health_theme;
+            welcomeCardsEnabled = values.ai_health_welcome_cards_enabled === 'true';
+
+            document.documentElement.style.setProperty('--ui-scale', currentScale);
+            document.documentElement.style.setProperty('--base-font-size', currentFontSize + 'px');
+            document.body.classList.toggle('light-mode', currentTheme === 'light');
 
             updateInputState();
             updatePlannerState();
+            updateProfileView();
+            handleScheduleVisibility();
+
             if (!welcomeCardsEnabled && !welcomeCard.classList.contains('hidden')) {
                 showWelcomeCard(false);
+            } else if (welcomeCardsEnabled && currentMessages.length === 0 && welcomeCard.classList.contains('hidden')) {
+                showWelcomeCard(true);
             }
 
-            const notice = document.getElementById('save-notice');
-            notice.style.opacity = '1';
-            setTimeout(() => { notice.style.opacity = '0'; }, 3000);
+            if (showNotice) {
+                const notice = document.getElementById('save-notice');
+                notice.style.opacity = '1';
+                setTimeout(() => { notice.style.opacity = '0'; }, 3000);
+            }
+            return true;
+        }
+
+        function scheduleSettingsSave() {
+            clearTimeout(settingsSaveTimer);
+            settingsSaveTimer = setTimeout(() => saveSettings(true), 500);
+        }
+
+        document.getElementById('settings-view').addEventListener('input', scheduleSettingsSave);
+        document.getElementById('settings-view').addEventListener('change', scheduleSettingsSave);
+        document.getElementById('save-settings-btn').addEventListener('click', () => {
+            clearTimeout(settingsSaveTimer);
+            saveSettings(true);
         });
+
+        updateProfileView();
 
         // --- 4. Planner Locking & Core Features ---
         function updatePlannerState() {

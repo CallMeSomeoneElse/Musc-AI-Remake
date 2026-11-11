@@ -99,10 +99,6 @@
             filter: none;
         }
 
-        body.light-mode .settingimg {
-            filter: none;
-        }
-
         body.light-mode .welcome-card {
             background-color: rgba(255, 255, 255, 0.92);
         }
@@ -1340,12 +1336,19 @@
             border-color: var(--accent-hover);
         }
         
-        .settingimg {
+        .settingimg_darkmode {
             width: calc(50px * var(--ui-scale));
             height: calc(50px * var(--ui-scale));
             object-fit: contain;
             border-radius: calc(8px * var(--ui-scale));
-            filter: invert(1);
+            filter:invert();
+        }
+
+        .settingimg_lightmode {
+            width: calc(50px * var(--ui-scale));
+            height: calc(50px * var(--ui-scale));
+            object-fit: contain;
+            border-radius: calc(8px * var(--ui-scale));
         }
 
 /* Reusable layout classes for static HTML */

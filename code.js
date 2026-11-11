@@ -34,8 +34,15 @@
         let userWeight = localStorage.getItem('ai_health_weight') || '';
         let userConditions = localStorage.getItem('ai_health_conditions') || '';
         let userEquipment = localStorage.getItem('ai_health_equipment') || '';
-        let userPreferredName = localStorage.getItem('ai_health_preferred_name') || '';
-        let userName = localStorage.getItem('ai_health_username') || '';
+        let userPreferredName = localStorage.getItem('ai_health_preferred_name') || localStorage.getItem('ai_health_username') || '';
+        let userName = userPreferredName;
+        if (userPreferredName) {
+            localStorage.setItem('ai_health_preferred_name', userPreferredName);
+            localStorage.setItem('ai_health_username', userPreferredName);
+        } else {
+            localStorage.removeItem('ai_health_preferred_name');
+            localStorage.removeItem('ai_health_username');
+        }
         let welcomeCardsEnabled = localStorage.getItem('ai_health_welcome_cards_enabled') !== 'false';
         
         // New Schedule State Variables
@@ -68,7 +75,6 @@
         if (userWeight) document.getElementById('user-weight').value = userWeight;
         if (userConditions) document.getElementById('user-conditions').value = userConditions;
         if (userPreferredName) document.getElementById('user-preferred-name').value = userPreferredName;
-        if (userName) document.getElementById('user-name').value = userName;
         if (userEquipment) document.getElementById('user-equipment').value = userEquipment;
         document.getElementById('welcome-card-enabled').checked = welcomeCardsEnabled;
         
@@ -351,23 +357,50 @@
             if (viewName === 'settings' && localStorage.getItem('ai_health_username_prompted') !== 'true' && !userName) {
                 const enteredName = window.prompt("What username would you like to use in welcome messages? (Optional)", "");
                 if (enteredName !== null) {
-                    userName = enteredName.trim();
-                    if (userName) localStorage.setItem('ai_health_username', userName);
-                    else localStorage.removeItem('ai_health_username');
-                    document.getElementById('user-name').value = userName;
+                    userPreferredName = enteredName.trim();
+                    userName = userPreferredName;
+                    document.getElementById('user-preferred-name').value = userPreferredName;
+                    if (userName) {
+                        localStorage.setItem('ai_health_username', userName);
+                        localStorage.setItem('ai_health_preferred_name', userPreferredName);
+                    } else {
+                        localStorage.removeItem('ai_health_username');
+                        localStorage.removeItem('ai_health_preferred_name');
+                    }
                 }
                 localStorage.setItem('ai_health_username_prompted', 'true');
             }
         }
 
         buttons.planner.addEventListener('click', () => switchView('planner'));
-        buttons.settings.addEventListener('click', () => switchView('settings'));
-        document.getElementById('go-to-settings-btn').addEventListener('click', () => switchView('settings'));
-        document.getElementById('profile-btn').addEventListener('click', () => switchView('profile'));
-        document.getElementById('profile-edit-btn').addEventListener('click', () => switchView('settings'));
-        document.getElementById('persona-btn').addEventListener('click', () => {
+        buttons.settings.addEventListener('click', () => {
             switchView('settings');
             document.querySelector('.personality-group').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+        document.getElementById('go-to-settings-btn').addEventListener('click', () => switchView('settings'));
+        const profileButton = document.getElementById('profile-btn');
+        const profileDropdown = document.getElementById('profile-dropdown');
+        function setProfileDropdownOpen(isOpen) {
+            profileDropdown.classList.toggle('open', isOpen);
+            profileButton.setAttribute('aria-expanded', String(isOpen));
+            profileDropdown.setAttribute('aria-hidden', String(!isOpen));
+        }
+
+        profileButton.addEventListener('click', () => {
+            setProfileDropdownOpen(!profileDropdown.classList.contains('open'));
+        });
+        document.getElementById('profile-dropdown-profile-btn').addEventListener('click', () => switchView('profile'));
+        document.getElementById('view-profile-btn').addEventListener('click', () => switchView('profile'));
+        document.getElementById('profile-edit-btn').addEventListener('click', () => switchView('settings'));
+        profileDropdown.addEventListener('click', (event) => {
+            if (event.target.closest('button:not(:disabled)')) {
+                setProfileDropdownOpen(false);
+            }
+        });
+        document.addEventListener('click', (event) => {
+            if (!event.target.closest('.profile-dropdown-container')) {
+                setProfileDropdownOpen(false);
+            }
         });
 
         // --- 2. Chat History Dropdown Toggle ---
@@ -390,7 +423,7 @@
                 'ai_health_weight': document.getElementById('user-weight').value.trim(),
                 'ai_health_conditions': document.getElementById('user-conditions').value.trim(),
                 'ai_health_preferred_name': document.getElementById('user-preferred-name').value.trim(),
-                'ai_health_username': document.getElementById('user-name').value.trim(),
+                'ai_health_username': document.getElementById('user-preferred-name').value.trim(),
                 'ai_health_equipment': document.getElementById('user-equipment').value.trim(),
                 'ai_health_schedule_type': document.getElementById('user-schedule-type').value.trim(),
                 'ai_health_schedule_start': document.getElementById('user-schedule-start').value,
@@ -408,21 +441,21 @@
 
         function updateProfileView() {
             const displayedPreferredName = document.getElementById('user-preferred-name').value.trim();
-            const displayedUserName = document.getElementById('user-name').value.trim();
             const displayedHeight = document.getElementById('user-height').value.trim();
             const displayedAge = document.getElementById('user-age').value.trim();
             const displayedWeight = document.getElementById('user-weight').value.trim();
             const displayedPersonality = document.getElementById('ai-personality-input').value.trim();
-            const displayName = displayedPreferredName || displayedUserName || '';
+            const displayName = displayedPreferredName;
             const profileStatus = document.getElementById('profile-status');
+            const profileDropdownStatus = document.getElementById('profile-dropdown-status');
             const profileName = document.getElementById('profile-name');
             const profileAvatar = document.getElementById('profile-avatar');
 
             profileStatus.textContent = displayName ? 'Configured' : 'Not set';
+            profileDropdownStatus.textContent = displayName || 'Not set';
             profileName.textContent = displayName || 'No profile set';
             profileAvatar.textContent = displayName ? displayName.charAt(0).toUpperCase() : '?';
-            document.getElementById('profile-username').textContent = displayedUserName || 'Blank';
-            document.getElementById('profile-preferred-name').textContent = displayedPreferredName || 'Blank';
+            document.getElementById('profile-username').textContent = displayedPreferredName || 'Blank';
             document.getElementById('profile-height').textContent = displayedHeight || 'Blank';
             document.getElementById('profile-age').textContent = displayedAge || 'Blank';
             document.getElementById('profile-weight').textContent = displayedWeight || 'Blank';
@@ -450,7 +483,7 @@
             userWeight = values.ai_health_weight;
             userConditions = values.ai_health_conditions;
             userPreferredName = values.ai_health_preferred_name;
-            userName = values.ai_health_username;
+            userName = values.ai_health_preferred_name;
             userEquipment = values.ai_health_equipment;
             userScheduleType = values.ai_health_schedule_type;
             userScheduleStart = values.ai_health_schedule_start;

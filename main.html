@@ -34,13 +34,20 @@
         <div class="dashboard-spacer"></div>
 
         <div class="dashboard-profile-actions">
-            <button class="dash-btn profile-btn" id="profile-btn">
-                <span>Profile</span>
-                <span class="profile-status" id="profile-status">Not set</span>
-            </button>
-            <button class="dash-btn centered-dash-btn" id="persona-btn">Persona</button>
-            <button class="dash-btn centered-dash-btn" id="settings-btn">Settings</button>
-            <button class="dash-btn centered-dash-btn logout-btn" id="logout-btn" disabled title="Reserved for a future login system">Log out</button>
+            <div class="profile-dropdown-container">
+                <button class="dash-btn profile-btn" id="profile-btn" aria-expanded="false" aria-controls="profile-dropdown">
+                    <span>Profile</span>
+                    <span class="profile-status" id="profile-status">Not set</span>
+                </button>
+                <div class="profile-dropdown" id="profile-dropdown" aria-hidden="true">
+                    <button class="dash-btn profile-dropdown-header" id="profile-dropdown-profile-btn">
+                        <span>Profile</span>
+                        <span class="profile-status" id="profile-dropdown-status">Not set</span>
+                    </button>
+                    <button class="dash-btn centered-dash-btn" id="view-profile-btn">View Profile</button>
+                    <button class="dash-btn centered-dash-btn" id="settings-btn">Settings &amp; Persona</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -73,14 +80,14 @@
                 <div class="profile-name" id="profile-name">No profile set</div>
                 <div class="profile-subtitle">Profile details from Settings</div>
                 <div class="profile-details">
-                    <div><span>Username</span><strong id="profile-username">Blank</strong></div>
-                    <div><span>Preferred Name</span><strong id="profile-preferred-name">Blank</strong></div>
+                    <div><span>Name</span><strong id="profile-username">Blank</strong></div>
                     <div><span>Height</span><strong id="profile-height">Blank</strong></div>
                     <div><span>Age</span><strong id="profile-age">Blank</strong></div>
                     <div><span>Weight</span><strong id="profile-weight">Blank</strong></div>
                     <div><span>Persona</span><strong id="profile-persona">Default</strong></div>
                 </div>
                 <button class="action-btn" id="profile-edit-btn">Edit Settings</button>
+                <button class="dash-btn centered-dash-btn logout-btn" id="logout-btn" disabled title="Reserved for a future login system">Log out</button>
             </div>
         </div>
 
@@ -192,18 +199,13 @@
                     <div class="settings-section-title">Optionals</div>
                     <div class="grid-2col">
                         <div class="settings-group">
-                            <label class="settings-label" for="user-name">Username (Optional):</label>
-                            <input type="text" id="user-name" class="settings-input" placeholder="e.g. Alex">
-                            <small class="settings-help">Used in welcome-card greetings. Leave blank for no username.</small>
-                        </div>
-                        <div class="settings-group">
                             <label class="settings-label" for="user-conditions">Special Conditions (Optional):</label>
                             <input type="text" id="user-conditions" class="settings-input" placeholder="Injuries, asthma, allergies, etc.">
                         </div>
                         <div class="settings-group">
-                            <label class="settings-label" for="user-preferred-name">Preferred Name (Optional):</label>
+                            <label class="settings-label" for="user-preferred-name">Name (Optional):</label>
                             <input type="text" id="user-preferred-name" class="settings-input" placeholder="e.g. Alex">
-                            <small class="settings-help">This is the name the AI should use while addressing you.</small>
+                            <small class="settings-help">Used for welcome greetings and how the assistant addresses you.</small>
                         </div>
                         <div class="settings-group">
                             <label class="settings-label" for="user-equipment">Equipment (Optional):</label>

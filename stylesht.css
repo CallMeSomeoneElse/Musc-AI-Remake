@@ -217,14 +217,33 @@
         }
 
         .profile-dropdown {
-            display: none;
+            display: flex;
             flex-direction: column;
             gap: calc(8px * var(--ui-scale));
             padding: calc(8px * var(--ui-scale)) 0 0 calc(10px * var(--ui-scale));
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transform: translateY(calc(-8px * var(--ui-scale)));
+            visibility: hidden;
+            transition: max-height 0.28s ease, opacity 0.2s ease, transform 0.28s ease, visibility 0.28s;
         }
 
         .profile-dropdown.open {
-            display: flex;
+            max-height: calc(220px * var(--ui-scale));
+            opacity: 1;
+            transform: translateY(0);
+            visibility: visible;
+            transition-delay: 0s;
+        }
+
+        .profile-dropdown-header {
+            cursor: pointer;
+            border-color: var(--border-focus);
+        }
+
+        .profile-dropdown-header:hover {
+            background-color: var(--bg-active);
         }
 
         .profile-status {
@@ -235,6 +254,17 @@
         .logout-btn:disabled {
             opacity: 0.45;
             cursor: not-allowed;
+        }
+
+        #profile-view .logout-btn {
+            margin-top: calc(10px * var(--ui-scale));
+            justify-content: center;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .profile-dropdown {
+                transition: none;
+            }
         }
 
         /* Collapsible History Dropdown */
@@ -523,9 +553,23 @@
             flex-grow: 1;
             padding: calc(30px * var(--ui-scale));
             overflow-y: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
             display: flex;
             flex-direction: column;
             gap: calc(20px * var(--ui-scale));
+        }
+
+        .chat-display::-webkit-scrollbar,
+        #chat-view::-webkit-scrollbar,
+        .welcome-card::-webkit-scrollbar {
+            display: none;
+        }
+
+        #chat-view,
+        .welcome-card {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
         }
 
         .welcome-card {

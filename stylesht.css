@@ -211,6 +211,22 @@
             width: 100%;
         }
 
+        .profile-dropdown-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .profile-dropdown {
+            display: none;
+            flex-direction: column;
+            gap: calc(8px * var(--ui-scale));
+            padding: calc(8px * var(--ui-scale)) 0 0 calc(10px * var(--ui-scale));
+        }
+
+        .profile-dropdown.open {
+            display: flex;
+        }
+
         .profile-status {
             color: var(--text-dim);
             font-size: calc((var(--base-font-size) - 2px) * var(--ui-scale));
@@ -230,6 +246,12 @@
             max-height: 35vh;
             overflow-y: auto;
             padding-right: 5px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .history-list::-webkit-scrollbar {
+            display: none;
         }
 
         .history-list.open {

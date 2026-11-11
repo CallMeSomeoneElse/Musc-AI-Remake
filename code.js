@@ -389,14 +389,8 @@
         profileButton.addEventListener('click', () => {
             setProfileDropdownOpen(!profileDropdown.classList.contains('open'));
         });
-        document.getElementById('profile-dropdown-profile-btn').addEventListener('click', () => switchView('profile'));
         document.getElementById('view-profile-btn').addEventListener('click', () => switchView('profile'));
         document.getElementById('profile-edit-btn').addEventListener('click', () => switchView('settings'));
-        profileDropdown.addEventListener('click', (event) => {
-            if (event.target.closest('button:not(:disabled)')) {
-                setProfileDropdownOpen(false);
-            }
-        });
         document.addEventListener('click', (event) => {
             if (!event.target.closest('.profile-dropdown-container')) {
                 setProfileDropdownOpen(false);
@@ -447,12 +441,10 @@
             const displayedPersonality = document.getElementById('ai-personality-input').value.trim();
             const displayName = displayedPreferredName;
             const profileStatus = document.getElementById('profile-status');
-            const profileDropdownStatus = document.getElementById('profile-dropdown-status');
             const profileName = document.getElementById('profile-name');
             const profileAvatar = document.getElementById('profile-avatar');
 
-            profileStatus.textContent = displayName ? 'Configured' : 'Not set';
-            profileDropdownStatus.textContent = displayName || 'Not set';
+            profileStatus.textContent = displayName || 'Not set';
             profileName.textContent = displayName || 'No profile set';
             profileAvatar.textContent = displayName ? displayName.charAt(0).toUpperCase() : '?';
             document.getElementById('profile-username').textContent = displayedPreferredName || 'Blank';
@@ -976,6 +968,32 @@
             closeModal();
         });
 
+        async function fetchWithTransientRetries(url, options) {
+            const maxRetries = 3;
+            let lastError;
+
+            for (let attempt = 0; attempt <= maxRetries; attempt++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (response.status !== 408 && response.status !== 429 && response.status < 500) {
+                        return response;
+                    }
+                    lastError = new Error(`Temporary API response: ${response.status}`);
+                } catch (error) {
+                    lastError = error;
+                }
+
+                if (attempt < maxRetries) {
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+                }
+            }
+
+            const retryError = new Error('The AI service did not respond after three retries.');
+            retryError.name = 'TransientRequestError';
+            retryError.cause = lastError;
+            throw retryError;
+        }
+
         // --- 7. Google Gemini API Chat Execution ---
         chatInput.addEventListener('keypress', async function (e) {
             if (e.key === 'Enter' && chatInput.value.trim() !== '') {
@@ -1027,7 +1045,7 @@
 
                     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${GEMINI_API_KEY}`;
                     
-                    const response = await fetch(url, {
+                    const response = await fetchWithTransientRetries(url, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
@@ -1054,7 +1072,11 @@
                 } catch (error) {
                     removeTypingIndicator(); // Ensure indicator vanishes on fetch errors
                     console.error("Gemini API Error:", error);
-                    appendMessage("Connection error. Please check your internet connection.", "system");
+                    if (error.name === 'TransientRequestError') {
+                        appendMessage("The AI service is temporarily busy and did not respond after three retries. Please try sending your message again shortly.", "system");
+                    } else {
+                        appendMessage("Connection error. Please check your internet connection.", "system");
+                    }
                 }
             }
         });

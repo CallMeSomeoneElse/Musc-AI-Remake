@@ -207,7 +207,7 @@
             display: flex;
             flex-direction: column;
             gap: calc(8px * var(--ui-scale));
-            margin-top: calc(15px * var(--ui-scale));
+            margin: 0 0 calc(15px * var(--ui-scale));
             width: 100%;
         }
 
@@ -235,15 +235,6 @@
             transform: translateY(0);
             visibility: visible;
             transition-delay: 0s;
-        }
-
-        .profile-dropdown-header {
-            cursor: pointer;
-            border-color: var(--border-focus);
-        }
-
-        .profile-dropdown-header:hover {
-            background-color: var(--bg-active);
         }
 
         .profile-status {

@@ -12,6 +12,19 @@
     <div class="dashboard-container" id="dashboard">
         <div class="toggle-btn" id="toggle-btn">☰</div>
 
+        <div class="dashboard-profile-actions">
+            <div class="profile-dropdown-container">
+                <button class="dash-btn profile-btn" id="profile-btn" aria-expanded="false" aria-controls="profile-dropdown">
+                    <span>Profile</span>
+                    <span class="profile-status" id="profile-status">Not set</span>
+                </button>
+                <div class="profile-dropdown" id="profile-dropdown" aria-hidden="true">
+                    <button class="dash-btn centered-dash-btn" id="view-profile-btn">View Profile</button>
+                    <button class="dash-btn centered-dash-btn" id="settings-btn">Settings &amp; Persona</button>
+                </div>
+            </div>
+        </div>
+
         <div class="dashboard-menu">
             <button class="dash-btn centered-dash-btn" id="new-chat-btn">New Chat</button>
             
@@ -33,22 +46,6 @@
         
         <div class="dashboard-spacer"></div>
 
-        <div class="dashboard-profile-actions">
-            <div class="profile-dropdown-container">
-                <button class="dash-btn profile-btn" id="profile-btn" aria-expanded="false" aria-controls="profile-dropdown">
-                    <span>Profile</span>
-                    <span class="profile-status" id="profile-status">Not set</span>
-                </button>
-                <div class="profile-dropdown" id="profile-dropdown" aria-hidden="true">
-                    <button class="dash-btn profile-dropdown-header" id="profile-dropdown-profile-btn">
-                        <span>Profile</span>
-                        <span class="profile-status" id="profile-dropdown-status">Not set</span>
-                    </button>
-                    <button class="dash-btn centered-dash-btn" id="view-profile-btn">View Profile</button>
-                    <button class="dash-btn centered-dash-btn" id="settings-btn">Settings &amp; Persona</button>
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- Main Content Area -->

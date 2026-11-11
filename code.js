@@ -113,6 +113,8 @@
         });
 
         const chatInput = document.getElementById('chat-input');
+        const chatComposer = document.getElementById('chat-composer');
+        const chatSendButton = document.getElementById('chat-send-btn');
         const chatDisplay = document.getElementById('chat-display');
         const welcomeCard = document.getElementById('welcome-card');
         const welcomePromptText = document.getElementById('welcome-prompt-text');
@@ -165,32 +167,29 @@
             if (show && welcomeCardsEnabled) {
                 welcomeCard.classList.remove('hidden');
                 bottomInputArea.style.display = 'none';
-                welcomeInputWrapper.appendChild(chatInput);
+                welcomeInputWrapper.appendChild(chatComposer);
                 renderWelcomeCard();
                 chatInput.placeholder = "Start by typing your first question...";
             } else {
                 welcomeCard.classList.add('hidden');
                 bottomInputArea.style.display = 'block';
-                bottomInputArea.appendChild(chatInput);
+                bottomInputArea.appendChild(chatComposer);
                 updateInputState();
             }
         }
 
         showWelcomeCard(true);
 
-        // Note: Schedule is an optional context, so it doesn't block completion
-        function isProfileComplete() {
-            return userHeight && userAge && userWeight;
-        }
-
         function updateInputState() {
             if (!GEMINI_API_KEY) {
                 chatInput.disabled = true;
+                chatSendButton.disabled = true;
                 chatInput.value = '';
                 chatInput.placeholder = "Please enter Gemini API key in Settings";
             } else {
                 chatInput.disabled = false;
-                chatInput.placeholder = "Ask HealthCL...";
+                chatSendButton.disabled = false;
+                chatInput.placeholder = "Ask anything...";
             }
         }
 
@@ -300,11 +299,6 @@
         }
 
         window.importTableToPlanner = function(tableWrapperId) {
-            if (!isProfileComplete()) {
-                alert("Planner is currently locked! Please complete your required health profile details (Height, Age, Weight) in Settings first.");
-                return;
-            }
-
             const wrapper = document.getElementById(tableWrapperId);
             if (!wrapper) return;
 
@@ -529,19 +523,12 @@
             const unlockedView = document.getElementById('planner-unlocked-view');
             const badge = document.getElementById('planner-profile-badge');
 
-            if (!isProfileComplete()) {
-                lockedView.style.display = 'flex';
-                unlockedView.style.display = 'none';
-                plannerTables = [];
-                localStorage.removeItem('ai_health_planner_tables');
-            } else {
-                lockedView.style.display = 'none';
-                unlockedView.style.display = 'flex';
-                let conditionText = userConditions ? ` | Conditions: ${userConditions}` : ' | Conditions: None';
-                let schedText = userScheduleType ? ` | Daily Commitment: ${userScheduleType}` : '';
-                badge.textContent = `Height: ${userHeight} | Age: ${userAge} | Weight: ${userWeight}${conditionText}${schedText}`;
-                renderPlannerGrid();
-            }
+            lockedView.style.display = 'none';
+            unlockedView.style.display = 'flex';
+            badge.textContent = userScheduleType
+                ? `Daily commitments: ${userScheduleType}${userTimezone ? ` | ${userTimezone}` : ''}`
+                : 'Manage tasks, schedules, and plans';
+            renderPlannerGrid();
         }
 
         function savePlannerTables() {
@@ -995,8 +982,12 @@
         }
 
         // --- 7. Google Gemini API Chat Execution ---
-        chatInput.addEventListener('keypress', async function (e) {
-            if (e.key === 'Enter' && chatInput.value.trim() !== '') {
+        let isSendingChatMessage = false;
+
+        async function sendChatMessage() {
+            if (isSendingChatMessage || chatInput.value.trim() === '') return;
+            isSendingChatMessage = true;
+            {
                 if (!currentSessionId) currentSessionId = 'session_' + Date.now();
                 if (welcomeCard && !welcomeCard.classList.contains('hidden')) {
                     showWelcomeCard(false);
@@ -1016,31 +1007,27 @@
                             parts: [{ text: m.text }]
                         }));
 
-                let sysInstruction = "You are an assitant designed to make personalized daily life scheduling, time management, and healthy lifestyle,you DONT ALWAYS ASK OR OFFER PEOPLE TO MAKE TABLES,WAIT FOR CERTAIN KEYWORDS OR REQUESTS FROM THE USER TO MAKE TABLES,PLANS, OR SCHEDULES. If the user asks you to make a table, schedule, or plan, you will politely ask them for their height, age, weight, and any special conditions or equipment they have. You will also ask them for their daily time commitment and preferred workout times. You will then use this information to create a personalized table or schedule for them. You will always format your tables in clean Markdown format so the user can easily copy and paste them into other applications.";
-                    
+                    let sysInstruction = "You are a helpful assistant for everyday questions, time management, organizing tasks, and healthy lifestyle topics. Do not require the user to provide profile information before helping or making a plan. Do not offer tables unless they are useful or requested. When a user asks for a table, task plan, or schedule, create it using the information available and ask only for details that are essential to that specific request. Format requested tables in clean Markdown so they can be imported into the Planner.";
+
                     if (aiPersonality) {
                         sysInstruction += `\nCRITICAL CONTEXT FOR AI PERSONALITY AND TONE: ${aiPersonality}`;
                     }
 
-                    if (!isProfileComplete()) {
-                        sysInstruction += "\nCRITICAL INSTRUCTION: The user's health profile (Height, Age, Weight) is currently INCOMPLETE and locked in Settings. IF THE USER ASKS YOU TO CREATE A PLANNER, SCHEDULE, WORKOUT ROUTINE, OR TABLE, YOU MUST POLITELY DECLINE AND MAKE AN EXCUSE explaining that you need them to complete their required profile details in Settings first before you can construct any planners or tables for them.";
-                    } else {
-                        let conditionsText = userConditions ? `, Special Conditions: ${userConditions}` : "";
-                        let nameText = userPreferredName ? `, Preferred Name: ${userPreferredName}` : "";
-                        let equipmentText = userEquipment ? `, Equipment / Resources: ${userEquipment}` : ", Equipment / Resources: none listed. Reassure the user that they can still follow a bodyweight-only plan and build around that.";
-                        sysInstruction += `\nUser Profile Context: Height: ${userHeight}, Age: ${userAge}, Weight: ${userWeight}${conditionsText}${nameText}${equipmentText}.`;
-                        if (userPreferredName) {
-                            sysInstruction += `\nWhen talking to the user, address them by their preferred name: ${userPreferredName}.`;
-                        }
-                        
-                        if (userScheduleType) {
-                            let schedTxt = `\nUser Daily Commitment: ${userScheduleType}`;
-                            if (userScheduleStart && userScheduleEnd) schedTxt += ` from ${userScheduleStart} to ${userScheduleEnd}`;
-                            if (userTimezone) schedTxt += ` (${userTimezone})`;
-                            sysInstruction += `${schedTxt}. Take this daily schedule/timezone into account when recommending workout times, routines, or meal timings.`;
-                        }
-
-                        sysInstruction += `\nAlways format schedules or routines using clean Markdown tables so the user can easily import them.`;
+                    if (userPreferredName) sysInstruction += `\nAddress the user as ${userPreferredName} when natural.`;
+                    const optionalProfile = [];
+                    if (userHeight) optionalProfile.push(`Height: ${userHeight}`);
+                    if (userAge) optionalProfile.push(`Age: ${userAge}`);
+                    if (userWeight) optionalProfile.push(`Weight: ${userWeight}`);
+                    if (userConditions) optionalProfile.push(`Health considerations: ${userConditions}`);
+                    if (userEquipment) optionalProfile.push(`Equipment/resources: ${userEquipment}`);
+                    if (optionalProfile.length) {
+                        sysInstruction += `\nOptional profile context, use only when relevant: ${optionalProfile.join(', ')}.`;
+                    }
+                    if (userScheduleType) {
+                        let scheduleContext = `\nDaily commitments: ${userScheduleType}`;
+                        if (userScheduleStart && userScheduleEnd) scheduleContext += ` from ${userScheduleStart} to ${userScheduleEnd}`;
+                        if (userTimezone) scheduleContext += ` (${userTimezone})`;
+                        sysInstruction += `${scheduleContext}. Consider this availability when planning.`;
                     }
 
                     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${GEMINI_API_KEY}`;
@@ -1079,7 +1066,16 @@
                     }
                 }
             }
+            isSendingChatMessage = false;
+        }
+
+        chatInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                sendChatMessage();
+            }
         });
+        chatSendButton.addEventListener('click', sendChatMessage);
 
         // Delegate actions created by chat and planner rendering.
         document.addEventListener('click', (event) => {

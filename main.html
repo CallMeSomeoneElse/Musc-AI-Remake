@@ -12,19 +12,6 @@
     <div class="dashboard-container" id="dashboard">
         <div class="toggle-btn" id="toggle-btn">☰</div>
 
-        <div class="dashboard-profile-actions">
-            <div class="profile-dropdown-container">
-                <button class="dash-btn profile-btn" id="profile-btn" aria-expanded="false" aria-controls="profile-dropdown">
-                    <span>Profile</span>
-                    <span class="profile-status" id="profile-status">Not set</span>
-                </button>
-                <div class="profile-dropdown" id="profile-dropdown" aria-hidden="true">
-                    <button class="dash-btn centered-dash-btn" id="view-profile-btn">View Profile</button>
-                    <button class="dash-btn centered-dash-btn" id="settings-btn">Settings &amp; Persona</button>
-                </div>
-            </div>
-        </div>
-
         <div class="dashboard-menu">
             <button class="dash-btn centered-dash-btn" id="new-chat-btn">New Chat</button>
             
@@ -46,6 +33,19 @@
         
         <div class="dashboard-spacer"></div>
 
+        <div class="dashboard-profile-actions">
+            <div class="profile-dropdown-container">
+                <button class="dash-btn profile-btn" id="profile-btn" aria-expanded="false" aria-controls="profile-dropdown">
+                    <span>Profile</span>
+                    <span class="profile-status" id="profile-status">Not set</span>
+                </button>
+                <div class="profile-dropdown" id="profile-dropdown" aria-hidden="true">
+                    <button class="dash-btn centered-dash-btn" id="view-profile-btn">View Profile</button>
+                    <button class="dash-btn centered-dash-btn" id="settings-btn">Settings &amp; Persona</button>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- Main Content Area -->
@@ -66,7 +66,13 @@
                 </div>
             </div>
             <div class="input-area is-hidden" id="bottom-input-area">
-                <input type="text" id="chat-input" class="chat-input" placeholder="Ask HealthCL" autocomplete="off">
+                <div class="chat-composer" id="chat-composer">
+                    <input type="text" id="chat-input" class="chat-input" placeholder="Ask anything" autocomplete="off">
+                    <button type="button" class="chat-send-btn" id="chat-send-btn" aria-label="Send message" title="Send message">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 21 3l-5.5 18-3.2-7.3L3 11.5Zm9.3 2.2L21 3"/></svg>
+                        <span>Send</span>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -97,8 +103,8 @@
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                     <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                 </svg>
-                <div class="planner-title">Planner Locked</div>
-                <div class="planner-desc">Please complete your necessary profile info under <strong>"Customize AI"</strong> in Settings (Height, Age, and Weight are required) to unlock your custom AI routine planner. Any unimported or pending tables are discarded while locked.</div>
+                <div class="planner-title">Planner</div>
+                <div class="planner-desc">Your health profile is optional. Add tasks and plans in chat, then import generated tables here.</div>
                 <button class="action-btn" id="go-to-settings-btn">Go to Settings</button>
             </div>
 
@@ -150,18 +156,18 @@
                 <div class="settings-card-subtitle">Tune the planner and chat experience with your profile, schedule, and available equipment.</div>
                 
                 <div class="settings-group settings-section-spaced">
-                    <div class="settings-section-title">Essential Info</div>
+                    <div class="settings-section-title">Optional Health Information</div>
                     <div class="grid-2col">
                         <div class="settings-group">
-                            <label class="settings-label required" for="user-height">Height (cm/in):</label>
+                            <label class="settings-label" for="user-height">Height (cm/in):</label>
                             <input type="text" id="user-height" class="settings-input" placeholder="e.g. 175 cm">
                         </div>
                         <div class="settings-group">
-                            <label class="settings-label required" for="user-age">Age:</label>
+                            <label class="settings-label" for="user-age">Age:</label>
                             <input type="number" id="user-age" class="settings-input" placeholder="e.g. 25">
                         </div>
                         <div class="settings-group">
-                            <label class="settings-label required" for="user-weight">Weight (kg/lbs):</label>
+                            <label class="settings-label" for="user-weight">Weight (kg/lbs):</label>
                             <input type="text" id="user-weight" class="settings-input" placeholder="e.g. 70 kg">
                         </div>
                     </div>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Musc.AI Assistant</title>
+    <title>DailyTaskOrganizerDTO</title>
     <link rel="stylesheet" href="stylesht.css">
 </head>
 <body>
@@ -34,18 +34,13 @@
         <div class="dashboard-spacer"></div>
 
         <div class="dashboard-profile-actions">
-            <div class="profile-dropdown-container">
-                <button class="dash-btn profile-btn" id="profile-btn" aria-expanded="false" aria-controls="profile-dropdown">
+            <button class="dash-btn profile-btn" id="profile-btn">
                 <span>Profile</span>
                 <span class="profile-status" id="profile-status">Not set</span>
-                </button>
-                <div class="profile-dropdown" id="profile-dropdown">
-                    <button class="dash-btn centered-dash-btn" id="view-profile-btn">View Profile</button>
-                    <button class="dash-btn centered-dash-btn" id="persona-btn">Persona</button>
-                    <button class="dash-btn centered-dash-btn" id="settings-btn">Settings</button>
-                    <button class="dash-btn centered-dash-btn logout-btn" id="logout-btn" disabled title="Reserved for a future login system">Log out</button>
-                </div>
-            </div>
+            </button>
+            <button class="dash-btn centered-dash-btn" id="persona-btn">Persona</button>
+            <button class="dash-btn centered-dash-btn" id="settings-btn">Settings</button>
+            <button class="dash-btn centered-dash-btn logout-btn" id="logout-btn" disabled title="Reserved for a future login system">Log out</button>
         </div>
     </div>
 
@@ -58,7 +53,7 @@
                 <div class="chat-display" id="chat-display"></div>
                 <div class="welcome-card" id="welcome-card">
                     <div class="welcome-card-content">
-                        <div class="welcome-headline" id="welcome-headline">Welcome to Musc.AI</div>
+                        <div class="welcome-headline" id="welcome-headline">Welcome to HealthCL</div>
                         <div class="welcome-prompt-text" id="welcome-prompt-text"></div>
                     </div>
                     <!-- Placeholder image: update the src below with your own image URL or inline SVG data URI. Change the alt text if desired. -->
@@ -67,7 +62,7 @@
                 </div>
             </div>
             <div class="input-area is-hidden" id="bottom-input-area">
-                <input type="text" id="chat-input" class="chat-input" placeholder="Ask anything" autocomplete="off">
+                <input type="text" id="chat-input" class="chat-input" placeholder="Ask HealthCL" autocomplete="off">
             </div>
         </div>
 
@@ -98,17 +93,17 @@
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                     <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                 </svg>
-                <div class="planner-title">Your Planner</div>
-                <div class="planner-desc">Organize upcoming tasks, schedules, and plans. Ask Musc.AI to create a table in chat, then import it here to track and edit it.</div>
-                <button class="action-btn" id="go-to-settings-btn">Personalize Assistant</button>
+                <div class="planner-title">Planner Locked</div>
+                <div class="planner-desc">Please complete your necessary profile info under <strong>"Customize AI"</strong> in Settings (Height, Age, and Weight are required) to unlock your custom AI routine planner. Any unimported or pending tables are discarded while locked.</div>
+                <button class="action-btn" id="go-to-settings-btn">Go to Settings</button>
             </div>
 
             <!-- Unlocked View State -->
             <div class="planner-unlocked-view is-hidden" id="planner-unlocked-view">
-                <div class="planner-title">Planner</div>
-                <div class="profile-badge" id="planner-profile-badge">Your plans and upcoming tasks</div>
+                <div class="planner-title">Musc.AI Custom Planner Dashboard</div>
+                <div class="profile-badge" id="planner-profile-badge">Height: -- | Age: -- | Weight: --</div>
                 
-                <button class="action-btn" id="generate-routine-btn">Create a Plan with AI</button>
+                <button class="action-btn" id="generate-routine-btn">Generate AI Schedule Table</button>
                 
                 <div class="planner-section-title active-plans-title">Active Plans</div>
                 <div class="planner-grid" id="planner-grid-container">
@@ -148,21 +143,21 @@
             <!-- Section 2: Customize AI -->
             <div class="settings-card">
                 <div class="settings-card-title">Customize AI</div>
-                <div class="settings-card-subtitle">Add optional context for personalized advice, including health, daily commitments, and available resources.</div>
+                <div class="settings-card-subtitle">Tune the planner and chat experience with your profile, schedule, and available equipment.</div>
                 
                 <div class="settings-group settings-section-spaced">
-                    <div class="settings-section-title">Health Profile (Optional)</div>
+                    <div class="settings-section-title">Essential Info</div>
                     <div class="grid-2col">
                         <div class="settings-group">
-                            <label class="settings-label" for="user-height">Height (cm/in):</label>
+                            <label class="settings-label required" for="user-height">Height (cm/in):</label>
                             <input type="text" id="user-height" class="settings-input" placeholder="e.g. 175 cm">
                         </div>
                         <div class="settings-group">
-                            <label class="settings-label" for="user-age">Age:</label>
+                            <label class="settings-label required" for="user-age">Age:</label>
                             <input type="number" id="user-age" class="settings-input" placeholder="e.g. 25">
                         </div>
                         <div class="settings-group">
-                            <label class="settings-label" for="user-weight">Weight (kg/lbs):</label>
+                            <label class="settings-label required" for="user-weight">Weight (kg/lbs):</label>
                             <input type="text" id="user-weight" class="settings-input" placeholder="e.g. 70 kg">
                         </div>
                     </div>
@@ -171,9 +166,9 @@
                 <div class="settings-group settings-section-spaced">
                     <div class="settings-section-title">Schedule</div>
                     <div class="settings-group">
-                        <label class="settings-label" for="user-schedule-type">Daily Commitments / Availability (Optional):</label>
+                        <label class="settings-label" for="user-schedule-type">Other Daily Commitments (Optional):</label>
                         <input type="text" id="user-schedule-type" class="settings-input" placeholder="e.g. School, Office Work, Night Shift">
-                        <small class="settings-help">Helps the AI organize tasks and plans around your available time.</small>
+                        <small class="settings-help">Helps the AI schedule your workouts and meals around your real life.</small>
                     </div>
                     
                     <div class="grid-2col schedule-details-container is-hidden" id="schedule-details-container">

@@ -172,6 +172,11 @@
 
         showWelcomeCard(true);
 
+        // Note: Schedule is an optional context, so it doesn't block completion
+        function isProfileComplete() {
+            return userHeight && userAge && userWeight;
+        }
+
         function updateInputState() {
             if (!GEMINI_API_KEY) {
                 chatInput.disabled = true;
@@ -179,7 +184,7 @@
                 chatInput.placeholder = "Please enter Gemini API key in Settings";
             } else {
                 chatInput.disabled = false;
-                chatInput.placeholder = "Ask anything...";
+                chatInput.placeholder = "Ask HealthCL...";
             }
         }
 
@@ -289,12 +294,17 @@
         }
 
         window.importTableToPlanner = function(tableWrapperId) {
+            if (!isProfileComplete()) {
+                alert("Planner is currently locked! Please complete your required health profile details (Height, Age, Weight) in Settings first.");
+                return;
+            }
+
             const wrapper = document.getElementById(tableWrapperId);
             if (!wrapper) return;
 
             let rawTableHtml = wrapper.querySelector('table').outerHTML;
             let editableTableHtml = injectContentEditable(rawTableHtml);
-            const tableName = prompt("Name your new planner table:", "New Plan") || "New Plan";
+            const tableName = prompt("Name your new planner table:", "Imported Schedule") || "Imported Schedule";
 
             plannerTables.push({
                 id: 'planner_tbl_' + Date.now(),
@@ -314,8 +324,6 @@
         const dashboard = document.getElementById('dashboard');
         const mainWrapper = document.getElementById('main-wrapper');
         const toggleBtn = document.getElementById('toggle-btn');
-        const profileButton = document.getElementById('profile-btn');
-        const profileDropdown = document.getElementById('profile-dropdown');
         
         const views = {
             chat: document.getElementById('chat-view'),
@@ -355,27 +363,11 @@
         buttons.planner.addEventListener('click', () => switchView('planner'));
         buttons.settings.addEventListener('click', () => switchView('settings'));
         document.getElementById('go-to-settings-btn').addEventListener('click', () => switchView('settings'));
-        profileButton.addEventListener('click', () => {
-            const isOpen = profileDropdown.classList.toggle('open');
-            profileButton.setAttribute('aria-expanded', String(isOpen));
-        });
-        document.getElementById('view-profile-btn').addEventListener('click', () => switchView('profile'));
+        document.getElementById('profile-btn').addEventListener('click', () => switchView('profile'));
         document.getElementById('profile-edit-btn').addEventListener('click', () => switchView('settings'));
         document.getElementById('persona-btn').addEventListener('click', () => {
             switchView('settings');
             document.querySelector('.personality-group').scrollIntoView({ behavior: 'smooth', block: 'center' });
-        });
-        profileDropdown.addEventListener('click', (event) => {
-            if (event.target.closest('button:not(:disabled)')) {
-                profileDropdown.classList.remove('open');
-                profileButton.setAttribute('aria-expanded', 'false');
-            }
-        });
-        document.addEventListener('click', (event) => {
-            if (!event.target.closest('.profile-dropdown-container')) {
-                profileDropdown.classList.remove('open');
-                profileButton.setAttribute('aria-expanded', 'false');
-            }
         });
 
         // --- 2. Chat History Dropdown Toggle ---
@@ -512,12 +504,19 @@
             const unlockedView = document.getElementById('planner-unlocked-view');
             const badge = document.getElementById('planner-profile-badge');
 
-            lockedView.style.display = 'none';
-            unlockedView.style.display = 'flex';
-            const commitments = userScheduleType ? `Daily commitments: ${userScheduleType}` : 'Organize your upcoming tasks and plans';
-            const timezone = userTimezone ? ` | Time zone: ${userTimezone}` : '';
-            badge.textContent = `${commitments}${timezone}`;
-            renderPlannerGrid();
+            if (!isProfileComplete()) {
+                lockedView.style.display = 'flex';
+                unlockedView.style.display = 'none';
+                plannerTables = [];
+                localStorage.removeItem('ai_health_planner_tables');
+            } else {
+                lockedView.style.display = 'none';
+                unlockedView.style.display = 'flex';
+                let conditionText = userConditions ? ` | Conditions: ${userConditions}` : ' | Conditions: None';
+                let schedText = userScheduleType ? ` | Daily Commitment: ${userScheduleType}` : '';
+                badge.textContent = `Height: ${userHeight} | Age: ${userAge} | Weight: ${userWeight}${conditionText}${schedText}`;
+                renderPlannerGrid();
+            }
         }
 
         function savePlannerTables() {
@@ -575,7 +574,7 @@
             });
 
             if (!hasActive) {
-                activeGrid.innerHTML = `<div class="empty-planner-state">No active plans yet. Import a table from chat or create a plan with AI.</div>`;
+                activeGrid.innerHTML = `<div class="empty-planner-state">No active tables. Import tables from your AI chats or click "Generate AI Schedule Table" above!</div>`;
             }
 
             archivedSection.style.display = hasArchived ? 'flex' : 'none';
@@ -640,22 +639,34 @@
                 alert("Please enter a valid Gemini API key in Settings.");
                 return;
             }
-            const planRequest = prompt("What would you like to plan?", "Upcoming tasks for this week");
-            if (planRequest === null || !planRequest.trim()) return;
-            const tableName = prompt("Give this plan a title:", "Upcoming Tasks") || "Upcoming Tasks";
+            const tableName = prompt("Give a title for this new AI Table:", "Weekly Fitness & Nutrition Plan") || "Weekly Fitness & Nutrition Plan";
 
             try {
-                let promptText = `Create a practical, organized plan for this request: ${planRequest}\n`;
+                let promptText = `Construct a complete workout and nutrition routine schedule table based on my details:
+                - Height: ${userHeight}
+                - Age: ${userAge}
+                - Weight: ${userWeight}`;
+                if (userConditions) promptText += `\n- Special Conditions: ${userConditions}`;
+                if (userPreferredName) {
+                    promptText += `\n- Preferred name: ${userPreferredName}`;
+                }
+                if (userEquipment) {
+                    promptText += `\n- Equipment / Resources: ${userEquipment}`;
+                } else {
+                    promptText += `\n- Equipment / Resources: none listed. Reassure the user that they can still follow a bodyweight-only plan and build the schedule around that.`;
+                }
+                
                 if (userScheduleType) {
                     let schedTxt = `\n- Daily Commitment: ${userScheduleType}`;
                     if (userScheduleStart && userScheduleEnd) schedTxt += ` from ${userScheduleStart} to ${userScheduleEnd}`;
                     if (userTimezone) schedTxt += ` (${userTimezone})`;
                     promptText += schedTxt;
+                    promptText += `\nUser wants to make a daily healthy schedule for them, but they want to chat before you do.`;
                 }
-                if (userPreferredName || userName) promptText += `\nUser's preferred name: ${userPreferredName || userName}.`;
+                
                 if (aiPersonality) promptText += `\n\nAI Persona Instructions: ${aiPersonality}`;
 
-                promptText += "\n\nReturn only a Markdown table with useful columns for this plan, such as Task, Due date/time, Priority, Status, and Notes. Make entries concrete and realistic. Do not invent specific deadlines if the user did not provide any; use 'Unscheduled' or a reasonable relative timeframe instead.";
+                promptText += `\n\nFormat your response STRICTLY as a Markdown Table with columns for Day/Time, Target/Focus, Exercises & Sets, and Nutrition Tips.`;
 
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${GEMINI_API_KEY}`;
                 const response = await fetch(url, {
@@ -954,29 +965,31 @@
                             parts: [{ text: m.text }]
                         }));
 
-                    let sysInstruction = "You are Musc.AI, a versatile, friendly assistant for everyday questions and practical help. Support a broad range of needs, especially time management, prioritizing and organizing upcoming tasks, breaking projects into steps, creating schedules, and healthy lifestyle goals. Do not assume every request is about health or exercise. Respond conversationally and only offer a plan when it is useful or requested. When the user asks for an upcoming task list, schedule, timeline, routine, or other plan, create a clear Markdown table suitable for importing into the Planner. Use useful columns such as Task, Due date, Priority, Status, and Notes when relevant. Help the user turn vague goals into realistic next actions and account for dates, deadlines, available time, and commitments they provide.";
+                let sysInstruction = "You are an assitant designed to make personalized daily life scheduling, time management, and healthy lifestyle,you DONT ALWAYS ASK OR OFFER PEOPLE TO MAKE TABLES,WAIT FOR CERTAIN KEYWORDS OR REQUESTS FROM THE USER TO MAKE TABLES,PLANS, OR SCHEDULES. If the user asks you to make a table, schedule, or plan, you will politely ask them for their height, age, weight, and any special conditions or equipment they have. You will also ask them for their daily time commitment and preferred workout times. You will then use this information to create a personalized table or schedule for them. You will always format your tables in clean Markdown format so the user can easily copy and paste them into other applications.";
                     
                     if (aiPersonality) {
                         sysInstruction += `\nCRITICAL CONTEXT FOR AI PERSONALITY AND TONE: ${aiPersonality}`;
                     }
 
-                    const profileContext = [];
-                    if (userHeight) profileContext.push(`Height: ${userHeight}`);
-                    if (userAge) profileContext.push(`Age: ${userAge}`);
-                    if (userWeight) profileContext.push(`Weight: ${userWeight}`);
-                    if (userConditions) profileContext.push(`Health considerations: ${userConditions}`);
-                    if (userEquipment) profileContext.push(`Equipment/resources: ${userEquipment}`);
-                    if (profileContext.length) {
-                        sysInstruction += `\nOptional health and resource context (use only when relevant): ${profileContext.join(', ')}.`;
-                    }
-                    if (userPreferredName || userName) {
-                        sysInstruction += `\nAddress the user as ${userPreferredName || userName} when it feels natural.`;
-                    }
-                    if (userScheduleType) {
-                        let schedTxt = `\nUser's regular commitments: ${userScheduleType}`;
-                        if (userScheduleStart && userScheduleEnd) schedTxt += ` from ${userScheduleStart} to ${userScheduleEnd}`;
-                        if (userTimezone) schedTxt += ` (${userTimezone})`;
-                        sysInstruction += `${schedTxt}. Account for this availability when planning tasks or schedules.`;
+                    if (!isProfileComplete()) {
+                        sysInstruction += "\nCRITICAL INSTRUCTION: The user's health profile (Height, Age, Weight) is currently INCOMPLETE and locked in Settings. IF THE USER ASKS YOU TO CREATE A PLANNER, SCHEDULE, WORKOUT ROUTINE, OR TABLE, YOU MUST POLITELY DECLINE AND MAKE AN EXCUSE explaining that you need them to complete their required profile details in Settings first before you can construct any planners or tables for them.";
+                    } else {
+                        let conditionsText = userConditions ? `, Special Conditions: ${userConditions}` : "";
+                        let nameText = userPreferredName ? `, Preferred Name: ${userPreferredName}` : "";
+                        let equipmentText = userEquipment ? `, Equipment / Resources: ${userEquipment}` : ", Equipment / Resources: none listed. Reassure the user that they can still follow a bodyweight-only plan and build around that.";
+                        sysInstruction += `\nUser Profile Context: Height: ${userHeight}, Age: ${userAge}, Weight: ${userWeight}${conditionsText}${nameText}${equipmentText}.`;
+                        if (userPreferredName) {
+                            sysInstruction += `\nWhen talking to the user, address them by their preferred name: ${userPreferredName}.`;
+                        }
+                        
+                        if (userScheduleType) {
+                            let schedTxt = `\nUser Daily Commitment: ${userScheduleType}`;
+                            if (userScheduleStart && userScheduleEnd) schedTxt += ` from ${userScheduleStart} to ${userScheduleEnd}`;
+                            if (userTimezone) schedTxt += ` (${userTimezone})`;
+                            sysInstruction += `${schedTxt}. Take this daily schedule/timezone into account when recommending workout times, routines, or meal timings.`;
+                        }
+
+                        sysInstruction += `\nAlways format schedules or routines using clean Markdown tables so the user can easily import them.`;
                     }
 
                     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${GEMINI_API_KEY}`;

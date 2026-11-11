@@ -1,4 +1,13 @@
 // --- 0. State Variables & Initialization ---
+        function logDiagnostic(level, event, details = {}) {
+            const logMethod = console[level] || console.log;
+            logMethod(`[Musc.AI] ${event}`, details);
+        }
+
+        function redactApiKey(message) {
+            return GEMINI_API_KEY && message ? message.split(GEMINI_API_KEY).join('[redacted]') : message;
+        }
+
         let GEMINI_API_KEY = localStorage.getItem('ai_health_gemini_key') || '';
         let aiPersonality = localStorage.getItem('ai_health_personality') || '';
 
@@ -194,6 +203,9 @@
         }
 
         function invalidateApiKey(errorMessage) {
+            logDiagnostic('error', 'Gemini API key rejected; removing saved key.', {
+                message: redactApiKey(errorMessage || 'Invalid key')
+            });
             GEMINI_API_KEY = '';
             localStorage.removeItem('ai_health_gemini_key');
             document.getElementById('api-key-input').value = '';
@@ -450,16 +462,28 @@
 
         function saveSettings(showNotice = true) {
             const values = collectSettingValues();
-            let changedCount = 0;
+            const changedKeys = Object.keys(values).filter(key => settingsSnapshot[key] !== values[key]);
 
-            Object.entries(values).forEach(([key, value]) => {
-                if (settingsSnapshot[key] === value) return;
-                changedCount++;
-                if (value) localStorage.setItem(key, value);
-                else localStorage.removeItem(key);
-            });
+            if (changedKeys.length === 0) {
+                logDiagnostic('log', 'Settings save skipped; no changes detected.');
+                return false;
+            }
 
-            if (changedCount === 0) return false;
+            try {
+                changedKeys.forEach(key => {
+                    if (values[key]) localStorage.setItem(key, values[key]);
+                    else localStorage.removeItem(key);
+                });
+            } catch (error) {
+                logDiagnostic('error', 'Settings save failed.', { changedFields: changedKeys.length, error });
+                if (showNotice) {
+                    const notice = document.getElementById('save-notice');
+                    notice.textContent = 'Could not save settings. See console for details.';
+                    notice.style.opacity = '1';
+                }
+                return false;
+            }
+
             settingsSnapshot = values;
 
             GEMINI_API_KEY = values.ai_health_gemini_key;
@@ -497,13 +521,16 @@
 
             if (showNotice) {
                 const notice = document.getElementById('save-notice');
+                notice.textContent = 'Settings saved successfully!';
                 notice.style.opacity = '1';
                 setTimeout(() => { notice.style.opacity = '0'; }, 3000);
             }
+            logDiagnostic('log', 'Settings saved.', { changedFields: changedKeys.length });
             return true;
         }
 
         function scheduleSettingsSave() {
+            logDiagnostic('log', 'Settings change detected; save scheduled.');
             clearTimeout(settingsSaveTimer);
             settingsSaveTimer = setTimeout(() => saveSettings(true), 500);
         }
@@ -647,7 +674,9 @@
 
         // --- Routine Generation via Planner AI Call ---
         document.getElementById('generate-routine-btn').addEventListener('click', async () => {
+            logDiagnostic('log', 'Planner generation requested.');
             if (!GEMINI_API_KEY) {
+                logDiagnostic('warn', 'Planner generation stopped; API key is missing.');
                 alert("Please enter a valid Gemini API key in Settings.");
                 return;
             }
@@ -691,7 +720,14 @@
 
                 const data = await response.json();
                 if (data.candidates && data.candidates.length > 0) {
-                    const aiText = data.candidates[0].content.parts[0].text;
+                    const aiText = data.candidates[0].content?.parts?.[0]?.text;
+                    if (typeof aiText !== 'string' || !aiText.trim()) {
+                        logDiagnostic('warn', 'Planner AI response did not contain text.', {
+                            candidateCount: data.candidates.length
+                        });
+                        alert("AI returned an empty plan. Please try again.");
+                        return;
+                    }
                     const tempDiv = document.createElement('div');
                     tempDiv.innerHTML = parseMarkdown(aiText);
                     const tableElem = tempDiv.querySelector('table');
@@ -701,16 +737,29 @@
                         plannerTables.unshift({ id: 'planner_tbl_' + Date.now(), title: tableName, tableHtml: editableHtml, archived: false });
                         savePlannerTables();
                         renderPlannerGrid();
+                        logDiagnostic('log', 'Planner table generated successfully.');
                     } else {
+                        logDiagnostic('warn', 'Planner AI response did not contain a Markdown table.', {
+                            outputLength: aiText.length
+                        });
                         alert("AI response did not contain a valid table structure. Please try again.");
                     }
                 } else if (data.error) {
+                    logDiagnostic('error', 'Planner AI request returned an API error.', {
+                        code: data.error.code,
+                        message: redactApiKey(data.error.message)
+                    });
                     const errLower = (data.error.message || '').toLowerCase();
                     if (data.error.code === 400 || data.error.code === 401 || data.error.code === 403 || errLower.includes('key')) invalidateApiKey(data.error.message);
                     else alert(`API Error: ${data.error.message}`);
+                } else {
+                    logDiagnostic('warn', 'Planner AI returned an unexpected response.', {
+                        hasCandidates: Array.isArray(data.candidates),
+                        responseKeys: Object.keys(data)
+                    });
                 }
             } catch (err) {
-                console.error(err);
+                logDiagnostic('error', 'Planner generation failed.', { error: err });
                 alert("Failed to generate plan. Please try again.");
             }
         });
@@ -971,6 +1020,14 @@
                 }
 
                 if (attempt < maxRetries) {
+                    logDiagnostic('warn', 'AI request connection failed; retrying.', {
+                        status: lastError.message.startsWith('Temporary API response: ')
+                            ? Number(lastError.message.split(': ')[1])
+                            : undefined,
+                        retry: attempt + 1,
+                        maxRetries,
+                        error: lastError
+                    });
                     await new Promise(resolve => setTimeout(resolve, 3000));
                 }
             }
@@ -978,6 +1035,10 @@
             const retryError = new Error('The AI service did not respond after three retries.');
             retryError.name = 'TransientRequestError';
             retryError.cause = lastError;
+            logDiagnostic('error', 'AI request exhausted transient retries.', {
+                retries: maxRetries,
+                error: lastError
+            });
             throw retryError;
         }
 
@@ -987,6 +1048,7 @@
         async function sendChatMessage() {
             if (isSendingChatMessage || chatInput.value.trim() === '') return;
             isSendingChatMessage = true;
+            logDiagnostic('log', 'Chat send triggered.', { method: document.activeElement === chatSendButton ? 'button' : 'keyboard' });
             {
                 if (!currentSessionId) currentSessionId = 'session_' + Date.now();
                 if (welcomeCard && !welcomeCard.classList.contains('hidden')) {
@@ -1047,18 +1109,34 @@
                     removeTypingIndicator();
                     
                     if (data.candidates && data.candidates.length > 0) {
-                        const aiText = data.candidates[0].content.parts[0].text;
-                        appendMessage(aiText, 'ai');
+                        const aiText = data.candidates[0].content?.parts?.[0]?.text;
+                        if (typeof aiText === 'string' && aiText.trim()) {
+                            appendMessage(aiText, 'ai');
+                            logDiagnostic('log', 'AI response received.', { outputLength: aiText.length });
+                        } else {
+                            logDiagnostic('warn', 'AI response candidate did not contain text.', {
+                                candidateCount: data.candidates.length
+                            });
+                            appendMessage("The AI returned an empty response. Please try again.", "system");
+                        }
                     } else if (data.error) {
+                        logDiagnostic('error', 'Chat AI request returned an API error.', {
+                            code: data.error.code,
+                            message: redactApiKey(data.error.message)
+                        });
                         const errLower = (data.error.message || '').toLowerCase();
                         if (data.error.code === 400 || data.error.code === 401 || data.error.code === 403 || errLower.includes('key')) invalidateApiKey(data.error.message);
                         else appendMessage(`API Error: ${data.error.message}`, "system");
                     } else {
+                        logDiagnostic('warn', 'Chat AI returned an unexpected response.', {
+                            hasCandidates: Array.isArray(data.candidates),
+                            responseKeys: Object.keys(data)
+                        });
                         appendMessage("Error: Received unexpected response from AI.", "system");
                     }
                 } catch (error) {
                     removeTypingIndicator(); // Ensure indicator vanishes on fetch errors
-                    console.error("Gemini API Error:", error);
+                    logDiagnostic('error', 'Chat AI request failed.', { error });
                     if (error.name === 'TransientRequestError') {
                         appendMessage("The AI service is temporarily busy and did not respond after three retries. Please try sending your message again shortly.", "system");
                     } else {

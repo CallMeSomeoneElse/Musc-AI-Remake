@@ -1,7 +1,7 @@
 // --- 0. State Variables & Initialization ---
         function logDiagnostic(level, event, details = {}) {
             const logMethod = console[level] || console.log;
-            logMethod(`[Musc.AI] ${event}`, details);
+            logMethod(`[DaManag] ${event}`, details);
         }
 
         function redactApiKey(message) {
@@ -372,17 +372,7 @@
             }
         });
 
-        // --- 2. Chat History Dropdown Toggle ---
-        const historyToggleBtn = document.getElementById('history-toggle-btn');
-        const historyList = document.getElementById('history-list');
-        const dropdownArrow = document.getElementById('dropdown-arrow');
-
-        historyToggleBtn.addEventListener('click', () => {
-            historyList.classList.toggle('open');
-            dropdownArrow.textContent = historyList.classList.contains('open') ? ' ' : ' ';
-        });
-
-        // --- 3. Settings Management ---
+        // --- 2. Settings Management ---
         function collectSettingValues() {
             return {
                 'ai_health_gemini_key': document.getElementById('api-key-input').value.trim(),
@@ -735,13 +725,15 @@
 
         // --- 5. Chat & History State ---
         let chatSessions = JSON.parse(localStorage.getItem('ai_health_sessions')) || [];
-        chatSessions = chatSessions.map(session => ({ ...session, archived: Boolean(session.archived) }));
+        chatSessions = chatSessions.map((session, index) => ({
+            ...session,
+            archived: Boolean(session.archived),
+            updatedAt: Number(session.updatedAt) || (chatSessions.length - index)
+        }));
         let currentSessionId = null;
         let currentMessages = [];
 
-        const archivedHistoryToggleBtn = document.getElementById('archived-history-toggle-btn');
-        const archivedHistoryList = document.getElementById('archived-history-list');
-        const archivedHistoryArrow = document.getElementById('archived-history-arrow');
+        const historyList = document.getElementById('history-list');
 
         renderHistoryList();
 
@@ -768,8 +760,10 @@
                 if (existingIndex >= 0) {
                     chatSessions[existingIndex].title = title;
                     chatSessions[existingIndex].messages = currentMessages;
+                    chatSessions[existingIndex].updatedAt = Date.now();
+                    chatSessions.unshift(chatSessions.splice(existingIndex, 1)[0]);
                 } else {
-                    chatSessions.unshift({ id: currentSessionId, title: title, messages: currentMessages, archived: false });
+                    chatSessions.unshift({ id: currentSessionId, title: title, messages: currentMessages, archived: false, updatedAt: Date.now() });
                 }
                 saveSessions();
                 renderHistoryList();
@@ -797,14 +791,12 @@
 
         function renderHistoryList() {
             historyList.innerHTML = '';
-            archivedHistoryList.innerHTML = '';
+            chatSessions.sort((a, b) => b.updatedAt - a.updatedAt);
 
-            const activeSessions = chatSessions.filter(session => !session.archived);
-            const archivedSessions = chatSessions.filter(session => session.archived);
-
-            const createSessionItem = (session, listElement, mode) => {
+            const createSessionItem = (session) => {
                 const item = document.createElement('div');
                 item.classList.add('history-item');
+                if (session.archived) item.classList.add('archived');
                 item.tabIndex = 0;
 
                 const titleSpan = document.createElement('span');
@@ -827,11 +819,11 @@
                 const archiveItem = document.createElement('button');
                 archiveItem.classList.add('history-menu-item');
                 archiveItem.type = 'button';
-                archiveItem.textContent = mode === 'archived' ? 'Restore' : 'Archive';
+                archiveItem.textContent = session.archived ? 'Restore' : 'Archive';
                 archiveItem.addEventListener('click', (e) => {
                     e.stopPropagation();
                     closeHistoryMenus();
-                    updateSessionArchiveState(session.id, mode !== 'archived');
+                    updateSessionArchiveState(session.id, !session.archived);
                 });
 
                 const deleteItem = document.createElement('button');
@@ -880,13 +872,12 @@
 
                 item.appendChild(titleSpan);
                 item.appendChild(actions);
-                listElement.appendChild(item);
+                historyList.appendChild(item);
             };
 
-            activeSessions.forEach(session => createSessionItem(session, historyList, 'active'));
-            archivedSessions.forEach(session => createSessionItem(session, archivedHistoryList, 'archived'));
+            chatSessions.forEach(createSessionItem);
 
-            if (activeSessions.length === 0) {
+            if (chatSessions.length === 0) {
                 const emptyState = document.createElement('div');
                 emptyState.classList.add('history-item');
                 emptyState.style.opacity = '0.7';
@@ -894,31 +885,16 @@
                 emptyState.textContent = 'No recent chats';
                 historyList.appendChild(emptyState);
             }
-
-            if (archivedSessions.length > 0) {
-                archivedHistoryToggleBtn.style.display = 'flex';
-            } else {
-                archivedHistoryToggleBtn.style.display = 'none';
-                archivedHistoryList.classList.remove('open');
-                archivedHistoryArrow.textContent = ' ';
-            }
-
-            if (archivedHistoryList.classList.contains('open') && archivedSessions.length === 0) {
-                archivedHistoryList.classList.remove('open');
-            }
         }
-
-        archivedHistoryToggleBtn.addEventListener('click', () => {
-            if (archivedHistoryToggleBtn.style.display === 'none') return;
-            const isOpen = archivedHistoryList.classList.contains('open');
-            archivedHistoryList.classList.toggle('open', !isOpen);
-            archivedHistoryArrow.textContent = isOpen ? ' ' : ' ';
-        });
 
         function loadSession(id) {
             saveCurrentSession();
             const session = chatSessions.find(s => s.id === id);
             if (session) {
+                session.updatedAt = Date.now();
+                chatSessions.sort((a, b) => b.updatedAt - a.updatedAt);
+                saveSessions();
+                renderHistoryList();
                 currentSessionId = session.id;
                 currentMessages = [...session.messages];
                 chatDisplay.innerHTML = '';

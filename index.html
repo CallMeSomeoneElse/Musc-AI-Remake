@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DailyTaskOrganizerDTO</title>
+    <title>DaManag - Daily Management</title>
     <link rel="stylesheet" href="stylesht.css">
 </head>
 <body>
@@ -14,24 +14,13 @@
 
         <div class="dashboard-menu">
             <button class="dash-btn centered-dash-btn" id="new-chat-btn">New Chat</button>
-            
-            <button class="dash-btn history-toggle-btn" id="history-toggle-btn">
-                <span>Chat History</span>
-                <span class="dropdown-arrow" id="dropdown-arrow"> </span>
-            </button>
-             
-            <div class="history-list" id="history-list"></div>
-
-            <button class="dash-btn archived-history-toggle-btn" id="archived-history-toggle-btn">
-                <span>Archived Chats</span>
-                <span class="dropdown-arrow" id="archived-history-arrow"> </span>
-            </button>
-            <div class="history-list" id="archived-history-list"></div>
-             
             <button class="dash-btn centered-dash-btn" id="planner-btn">Planner</button>
         </div>
-        
-        <div class="dashboard-spacer"></div>
+
+        <section class="recent-chats" aria-label="Recent chats">
+            <h2 class="recent-chats-title">Recents</h2>
+            <div class="history-list" id="history-list"></div>
+        </section>
 
         <div class="dashboard-profile-actions">
             <div class="profile-dropdown-container">

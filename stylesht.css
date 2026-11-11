@@ -136,7 +136,7 @@
             border-right: 1px solid var(--border-main);
             display: flex;
             flex-direction: column;
-            padding: calc(30px * var(--ui-scale)) calc(20px * var(--ui-scale));
+            padding: calc(18px * var(--ui-scale)) calc(16px * var(--ui-scale));
             box-sizing: border-box;
             z-index: 10;
             transform: translateX(-100%); 
@@ -176,8 +176,9 @@
         .dashboard-menu {
             display: flex;
             flex-direction: column;
-            gap: calc(15px * var(--ui-scale));
+            gap: calc(7px * var(--ui-scale));
             width: 100%;
+            flex-shrink: 0;
         }
 
         .dash-btn {
@@ -207,8 +208,9 @@
             display: flex;
             flex-direction: column;
             gap: calc(8px * var(--ui-scale));
-            margin-top: calc(15px * var(--ui-scale));
+            margin-top: calc(10px * var(--ui-scale));
             width: 100%;
+            flex-shrink: 0;
         }
 
         .profile-dropdown-container {
@@ -258,34 +260,55 @@
             }
         }
 
-        /* Collapsible History Dropdown */
-        .history-list {
-            display: none;
+        .recent-chats {
+            display: flex;
+            flex: 1;
             flex-direction: column;
-            gap: calc(8px * var(--ui-scale));
-            margin-top: calc(5px * var(--ui-scale));
-            max-height: 35vh;
+            min-height: 0;
+            margin-top: calc(18px * var(--ui-scale));
+            padding-top: calc(12px * var(--ui-scale));
+            border-top: 1px solid var(--border-light);
+        }
+
+        .recent-chats-title {
+            flex-shrink: 0;
+            margin: 0 0 calc(8px * var(--ui-scale));
+            color: var(--text-muted);
+            font-size: calc((var(--base-font-size) - 1px) * var(--ui-scale));
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .history-list {
+            display: flex;
+            flex: 1;
+            flex-direction: column;
+            gap: calc(6px * var(--ui-scale));
+            min-height: 0;
             overflow-y: auto;
-            padding-right: 5px;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
+            padding: 0 calc(4px * var(--ui-scale)) 0 0;
+            scrollbar-width: thin;
+            scrollbar-color: #777 transparent;
         }
 
         .history-list::-webkit-scrollbar {
-            display: none;
+            width: 7px;
         }
 
-        .history-list.open {
-            display: flex;
+        .history-list::-webkit-scrollbar-track {
+            background: transparent;
         }
 
-        #archived-history-list {
-            margin-top: calc(6px * var(--ui-scale));
-            max-height: 24vh;
+        .history-list::-webkit-scrollbar-thumb {
+            background-color: #777;
+            border: 2px solid transparent;
+            border-radius: 999px;
+            background-clip: padding-box;
         }
 
-        #archived-history-toggle-btn {
-            margin-top: calc(10px * var(--ui-scale));
+        .history-list::-webkit-scrollbar-thumb:hover {
+            background-color: #999;
         }
 
         /* History Item */
@@ -428,10 +451,6 @@
             .history-menu {
                 min-width: 150px;
             }
-        }
-
-        .dashboard-spacer {
-            flex-grow: 1;
         }
 
         /* MAIN CONTAINER (Right Side - 80%) */
@@ -1320,23 +1339,6 @@
 /* Reusable layout classes for static HTML */
 .centered-dash-btn {
     justify-content: center;
-}
-
-.history-toggle-btn {
-    justify-content: center;
-    display: flex;
-    align-items: center;
-}
-
-.dropdown-arrow {
-    font-size: 10px;
-    opacity: 0.7;
-}
-
-.archived-history-toggle-btn {
-    justify-content: center;
-    margin-top: 8px;
-    text-align: center;
 }
 
 .is-hidden {

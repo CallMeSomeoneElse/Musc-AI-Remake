@@ -826,18 +826,65 @@
         }
 
         /* Markdown & Table Styling */
-        .message.ai h2, .message.ai h3, .message.ai h4 {
+        .message.ai h1,
+        .message.ai h2,
+        .message.ai h3,
+        .message.ai h4,
+        .message.ai h5,
+        .message.ai h6 {
             margin-top: 10px;
             margin-bottom: 6px;
             color: var(--text-main);
             font-weight: 600;
         }
+
+        .message.ai p {
+            margin: 0 0 10px;
+        }
+
+        .message.ai p:last-child {
+            margin-bottom: 0;
+        }
+
         .message.ai ul, .message.ai ol {
             margin: 6px 0;
             padding-left: 20px;
         }
         .message.ai li {
             margin-bottom: 4px;
+        }
+
+        .message.ai blockquote {
+            margin: 10px 0;
+            padding: 4px 12px;
+            border-left: 3px solid var(--border-focus);
+            color: var(--text-muted);
+        }
+
+        .message.ai pre {
+            max-width: 100%;
+            overflow-x: auto;
+            padding: 12px;
+            border-radius: 6px;
+            background: var(--bg-nav);
+        }
+
+        .message.ai code {
+            padding: 2px 5px;
+            border-radius: 4px;
+            background: var(--bg-nav);
+            font-family: Consolas, "Courier New", monospace;
+            font-size: 0.9em;
+        }
+
+        .message.ai pre code {
+            padding: 0;
+            background: transparent;
+        }
+
+        .message.ai a {
+            color: var(--accent);
+            text-decoration: underline;
         }
 
         .table-block-wrapper {

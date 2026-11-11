@@ -235,72 +235,41 @@
             }
         }
 
-        // --- Markdown & Table Parser ---
+        // --- Markdown & Table Rendering ---
+        const markdownRenderer = typeof window.markdownit === 'function'
+            ? window.markdownit({ html: false, breaks: true, linkify: false, typographer: false })
+            : null;
+        let markdownTableSequence = 0;
+
         function parseMarkdown(text) {
             if (!text) return '';
-            let formattedText = convertMarkdownTables(text);
-            formattedText = formattedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-            formattedText = formattedText.replace(/\*(.*?)\*/g, '<em>$1</em>');
-            formattedText = formattedText.replace(/\n/g, '<br>');
-            return formattedText;
-        }
-
-        function convertMarkdownTables(text) {
-            if (!text.includes('|')) return text;
-            const lines = text.split('\n');
-            let inTable = false;
-            let tableLines = [];
-            let result = [];
-
-            for (let i = 0; i < lines.length; i++) {
-                const line = lines[i].trim();
-                const isTableLine = line.includes('|') && (line.startsWith('|') || line.endsWith('|') || line.split('|').length > 2);
-
-                if (isTableLine) {
-                    inTable = true;
-                    tableLines.push(line);
-                } else {
-                    if (inTable) {
-                        result.push(renderHtmlTableBlock(tableLines));
-                        tableLines = [];
-                        inTable = false;
-                    }
-                    result.push(line);
-                }
+            if (!markdownRenderer) {
+                logDiagnostic('error', 'Markdown renderer is unavailable; showing escaped plain text.');
+                const fallback = document.createElement('div');
+                fallback.textContent = text;
+                return fallback.innerHTML.replace(/\n/g, '<br>');
             }
-            if (inTable) result.push(renderHtmlTableBlock(tableLines));
-            return result.join('\n');
-        }
 
-        function renderHtmlTableBlock(lines) {
-            let headers = [];
-            let rows = [];
+            const rendered = document.createElement('template');
+            rendered.innerHTML = markdownRenderer.render(text);
+            rendered.content.querySelectorAll('table').forEach((table) => {
+                const tableId = `table_${Date.now()}_${markdownTableSequence++}`;
+                const wrapper = document.createElement('div');
+                wrapper.className = 'table-block-wrapper';
+                wrapper.id = tableId;
 
-            lines.forEach((line) => {
-                if (line.replace(/[\s\-\|]/g, '') === '') return;
-                const cells = line.split('|').map(c => c.trim()).filter((c, idx, arr) => !(idx === 0 && c === '') && !(idx === arr.length - 1 && c === ''));
-                if (headers.length === 0) headers = cells;
-                else rows.push(cells);
+                table.classList.add('routine-table');
+                wrapper.appendChild(table.cloneNode(true));
+
+                const importButton = document.createElement('button');
+                importButton.className = 'import-table-btn';
+                importButton.dataset.action = 'import-table';
+                importButton.dataset.tableId = tableId;
+                importButton.textContent = 'Import to Planner';
+                wrapper.appendChild(importButton);
+                table.replaceWith(wrapper);
             });
-
-            if (headers.length === 0) return '';
-            const tableId = 'table_' + Math.random().toString(36).substr(2, 9);
-
-            let html = `<div class="table-block-wrapper" id="${tableId}">`;
-            html += `<table class="routine-table"><thead><tr>`;
-            headers.forEach(h => html += `<th>${h}</th>`);
-            html += `</tr></thead><tbody>`;
-            rows.forEach(r => {
-                html += `<tr>`;
-                r.forEach(c => html += `<td>${c}</td>`);
-                html += `</tr>`;
-            });
-            html += `</tbody></table>`;
-            html += `<button class="import-table-btn" data-action="import-table" data-table-id="${tableId}">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-                        Import to Planner
-                     </button></div>`;
-            return html;
+            return rendered.innerHTML;
         }
 
         function injectContentEditable(htmlString) {

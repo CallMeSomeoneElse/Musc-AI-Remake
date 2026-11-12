@@ -1337,16 +1337,16 @@
         }
         
         .settingimg_darkmode {
-            width: calc(50px * var(--ui-scale));
-            height: calc(50px * var(--ui-scale));
+            width: calc(25px * var(--ui-scale));
+            height: calc(25px * var(--ui-scale));
             object-fit: contain;
             border-radius: calc(8px * var(--ui-scale));
             filter:invert();
         }
 
         .settingimg_lightmode {
-            width: calc(50px * var(--ui-scale));
-            height: calc(50px * var(--ui-scale));
+            width: calc(25px * var(--ui-scale));
+            height: calc(25px * var(--ui-scale));
             object-fit: contain;
             border-radius: calc(8px * var(--ui-scale));
         }
